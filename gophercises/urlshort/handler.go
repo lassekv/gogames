@@ -1,7 +1,6 @@
 package urlshort
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -58,12 +57,7 @@ func DynamoDBPutHandler(client dynamodb.DynamoDB, fallback http.Handler) http.Ha
 func DynamoDBListAllHandler(client dynamodb.DynamoDB, fallback http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		allRecords := dynamo.GetAllMappings(&client)
-		jsonTXT, err := json.Marshal(allRecords)
-		if err != nil {
-			fallback.ServeHTTP(w, req)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(jsonTXT)
+		//w.Header().Set("Content-Type", "application/html")
+		listAll(allRecords, w)
 	}
 }

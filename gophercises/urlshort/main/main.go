@@ -16,10 +16,11 @@ func main() {
 	if !ok {
 		log.Fatal("Unable to create dynamo client")
 	}
-	dynamoHandler := urlshort.DynamoDBHandler(*svc, mux)
+	dynamoGetHandler := urlshort.DynamoDBGetHandler(*svc, mux)
+	dynamoPutHandler := urlshort.DynamoDBPutHandler(*svc, dynamoGetHandler)
 
 	fmt.Println("Starting the server on :8080")
-	err := http.ListenAndServe(":8080", dynamoHandler)
+	err := http.ListenAndServe(":8080", dynamoPutHandler)
 	if err != nil {
 		log.Fatalf("error %v", err)
 	}

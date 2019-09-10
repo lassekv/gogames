@@ -51,9 +51,12 @@ func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	return MapHandler(pathMap, fallback), nil
 }
 
-// DynamoDBHandler Resolves the map in a DynamoDB
-func DynamoDBHandler(client dynamodb.DynamoDB, fallback http.Handler) http.HandlerFunc {
+// DynamoDBGetHandler Resolves the map in a DynamoDB
+func DynamoDBGetHandler(client dynamodb.DynamoDB, fallback http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		if req.Method != "GET" && req.Method != "" {
+			fallback.ServeHTTP(w, req)
+		}
 		path := req.URL.Path
 		if path == "/" || path == "/favicon.ico" {
 			fallback.ServeHTTP(w, req)
@@ -67,6 +70,25 @@ func DynamoDBHandler(client dynamodb.DynamoDB, fallback http.Handler) http.Handl
 		} else {
 			fallback.ServeHTTP(w, req)
 		}
+	}
+}
+
+// DynamoDBPutHandler Adds a new url mapping on the form /shorturl?url=longurl
+func DynamoDBPutHandler(client dynamodb.DynamoDB, fallback http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if req.Method != "PUT" && req.Method != "POST" {
+			fallback.ServeHTTP(w, req)
+		}
+		shortURL := req.URL.Path
+		query := req.URL.Query()
+		if strings.HasPrefix(shortURL, "/") {
+			shortURL = shortURL[1:]
+		}
+		if len(query["url"][0]) == 0 {
+			fallback.ServeHTTP(w, req)
+		}
+		dynamo.PutRecord(&client, shortURL, query["url"][0])
+		http.Redirect(w, req, "http://localhost:8080/", 200)
 	}
 }
 

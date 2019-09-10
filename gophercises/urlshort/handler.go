@@ -1,8 +1,13 @@
 package urlshort
 
 import (
-	"gopkg.in/yaml.v2"
 	"net/http"
+	"strings"
+
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+
+	"github.com/lassekv/gogames/gophercises/dynamo"
+	"gopkg.in/yaml.v2"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -44,6 +49,25 @@ func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 		return nil, err
 	}
 	return MapHandler(pathMap, fallback), nil
+}
+
+// DynamoDBHandler Resolves the map in a DynamoDB
+func DynamoDBHandler(client dynamodb.DynamoDB, fallback http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		path := req.URL.Path
+		if path == "/" || path == "/favicon.ico" {
+			fallback.ServeHTTP(w, req)
+			return
+		}
+		if strings.HasPrefix(path, "/") {
+			path = path[1:]
+		}
+		if val, ok := dynamo.GetRecord(&client, path); ok && len(val.URL) > 0 {
+			http.Redirect(w, req, val.URL, 301)
+		} else {
+			fallback.ServeHTTP(w, req)
+		}
+	}
 }
 
 func parseYAML(bytes []byte) (map[string]string, error) {

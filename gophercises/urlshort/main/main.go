@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/lassekv/gogames/gophercises/dynamo"
+
 	"github.com/lassekv/gogames/gophercises/urlshort"
 )
 
@@ -30,8 +32,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	svc, ok := dynamo.CreateClient()
+	if !ok {
+		log.Fatal("Unable to create dynamo client")
+	}
+	dynamoHandler := urlshort.DynamoDBHandler(*svc, yamlHandler)
+
 	fmt.Println("Starting the server on :8080")
-	err = http.ListenAndServe(":8080", yamlHandler)
+	err = http.ListenAndServe(":8080", dynamoHandler)
 	if err != nil {
 		log.Fatalf("error %v", err)
 	}

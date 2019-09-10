@@ -1,61 +1,20 @@
 package urlshort
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/lassekv/gogames/gophercises/urlshort/dynamo"
-
-	"gopkg.in/yaml.v2"
 )
-
-// MapHandler will return an http.HandlerFunc (which also
-// implements http.Handler) that will attempt to map any
-// paths (keys in the map) to their corresponding URL (values
-// that each key in the map points to, in string format).
-// If the path is not provided in the map, then the fallback
-// http.Handler will be called instead.
-func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		path := req.URL.Path
-		if val, ok := pathsToUrls[path]; ok {
-			http.Redirect(w, req, val, 301)
-		} else {
-			fallback.ServeHTTP(w, req)
-		}
-	}
-}
-
-// YAMLHandler will parse the provided YAML and then return
-// an http.HandlerFunc (which also implements http.Handler)
-// that will attempt to map any paths to their corresponding
-// URL. If the path is not provided in the YAML, then the
-// fallback http.Handler will be called instead.
-//
-// YAML is expected to be in the format:
-//
-//     - path: /some-path
-//       url: https://www.some-url.com/demo
-//
-// The only errors that can be returned all related to having
-// invalid YAML data.
-//
-// See MapHandler to create a similar http.HandlerFunc via
-// a mapping of paths to urls.
-func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	pathMap, err := parseYAML(yaml)
-	if err != nil {
-		return nil, err
-	}
-	return MapHandler(pathMap, fallback), nil
-}
 
 // DynamoDBGetHandler Resolves the map in a DynamoDB
 func DynamoDBGetHandler(client dynamodb.DynamoDB, fallback http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != "GET" && req.Method != "" {
 			fallback.ServeHTTP(w, req)
+			return
 		}
 		path := req.URL.Path
 		if path == "/" || path == "/favicon.ico" {
@@ -69,6 +28,7 @@ func DynamoDBGetHandler(client dynamodb.DynamoDB, fallback http.Handler) http.Ha
 			http.Redirect(w, req, val.URL, 301)
 		} else {
 			fallback.ServeHTTP(w, req)
+			return
 		}
 	}
 }
@@ -78,6 +38,7 @@ func DynamoDBPutHandler(client dynamodb.DynamoDB, fallback http.Handler) http.Ha
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != "PUT" && req.Method != "POST" {
 			fallback.ServeHTTP(w, req)
+			return
 		}
 		shortURL := req.URL.Path
 		query := req.URL.Query()
@@ -86,31 +47,23 @@ func DynamoDBPutHandler(client dynamodb.DynamoDB, fallback http.Handler) http.Ha
 		}
 		if len(query["url"][0]) == 0 {
 			fallback.ServeHTTP(w, req)
+			return
 		}
 		dynamo.PutRecord(&client, shortURL, query["url"][0])
 		http.Redirect(w, req, "http://localhost:8080/", 200)
 	}
 }
 
-func parseYAML(bytes []byte) (map[string]string, error) {
-	type pair struct {
-		Path string
-		URL  string
+// DynamoDBListAllHandler Returns a json formated list of all records
+func DynamoDBListAllHandler(client dynamodb.DynamoDB, fallback http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		allRecords := dynamo.GetAllMappings(&client)
+		jsonTXT, err := json.Marshal(allRecords)
+		if err != nil {
+			fallback.ServeHTTP(w, req)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonTXT)
 	}
-
-	type pairs struct {
-		Pairs []pair
-	}
-
-	var prs pairs
-
-	err := yaml.UnmarshalStrict(bytes, &prs)
-	if err != nil {
-		return nil, err
-	}
-	res := make(map[string]string, len(prs.Pairs))
-	for _, r := range prs.Pairs {
-		res[r.Path] = r.URL
-	}
-	return res, nil
 }

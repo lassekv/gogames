@@ -106,3 +106,20 @@ func PutRecord(svc *dynamodb.DynamoDB, key string, value string) bool {
 	}
 	return true
 }
+
+// GetAllMappings Returns all mappings
+func GetAllMappings(svc *dynamodb.DynamoDB) []Record {
+	params := &dynamodb.ScanInput{
+		TableName: aws.String("urlshortener"),
+	}
+	result, err := svc.Scan(params)
+	if err != nil {
+		fmt.Printf("Failed to scan all records in table %v", err)
+	}
+	obj := []Record{}
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &obj)
+	if err != nil {
+		fmt.Printf("failed to unmarshal Query result items, %v", err)
+	}
+	return obj
+}

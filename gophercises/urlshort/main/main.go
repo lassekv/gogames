@@ -10,28 +10,19 @@ import (
 )
 
 func main() {
-	mux := defaultMux()
+	mux := http.NewServeMux()
 
 	svc, ok := dynamo.CreateClient()
 	if !ok {
 		log.Fatal("Unable to create dynamo client")
 	}
-	dynamoGetHandler := urlshort.DynamoDBGetHandler(*svc, mux)
-	dynamoPutHandler := urlshort.DynamoDBPutHandler(*svc, dynamoGetHandler)
+	dynamoListAllHandler := urlshort.DynamoDBListAllHandler(*svc, mux)
+	dynamoPutHandler := urlshort.DynamoDBPutHandler(*svc, dynamoListAllHandler)
+	dynamoGetHandler := urlshort.DynamoDBGetHandler(*svc, dynamoPutHandler)
 
 	fmt.Println("Starting the server on :8080")
-	err := http.ListenAndServe(":8080", dynamoPutHandler)
+	err := http.ListenAndServe(":8080", dynamoGetHandler)
 	if err != nil {
 		log.Fatalf("error %v", err)
 	}
-}
-
-func defaultMux() *http.ServeMux {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", hello)
-	return mux
-}
-
-func hello(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprintln(w, "Unknown URL")
 }

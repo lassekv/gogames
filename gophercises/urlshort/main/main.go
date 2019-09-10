@@ -12,34 +12,14 @@ import (
 func main() {
 	mux := defaultMux()
 
-	// Build the MapHandler using the mux as the fallback
-	pathsToUrls := map[string]string{
-		"/urlshort-godoc": "https://godoc.org/github.com/gophercises/urlshort",
-		"/yaml-godoc":     "https://godoc.org/gopkg.in/yaml.v2",
-	}
-	mapHandler := urlshort.MapHandler(pathsToUrls, mux)
-
-	// Build the YAMLHandler using the mapHandler as the
-	// fallback
-	yaml := `pairs:
-- path: /urlshort
-  url: https://github.com/gophercises/urlshort
-- path: /urlshort-final
-  url: https://github.com/gophercises/urlshort/tree/solution
-`
-	yamlHandler, err := urlshort.YAMLHandler([]byte(yaml), mapHandler)
-	if err != nil {
-		panic(err)
-	}
-
 	svc, ok := dynamo.CreateClient()
 	if !ok {
 		log.Fatal("Unable to create dynamo client")
 	}
-	dynamoHandler := urlshort.DynamoDBHandler(*svc, yamlHandler)
+	dynamoHandler := urlshort.DynamoDBHandler(*svc, mux)
 
 	fmt.Println("Starting the server on :8080")
-	err = http.ListenAndServe(":8080", dynamoHandler)
+	err := http.ListenAndServe(":8080", dynamoHandler)
 	if err != nil {
 		log.Fatalf("error %v", err)
 	}

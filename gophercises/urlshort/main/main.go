@@ -5,9 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/lassekv/gogames/gophercises/dynamo"
-
 	"github.com/lassekv/gogames/gophercises/urlshort"
+	"github.com/lassekv/gogames/gophercises/urlshort/dynamo"
 )
 
 func main() {
@@ -53,5 +52,5 @@ func defaultMux() *http.ServeMux {
 }
 
 func hello(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprintln(w, "URL not found in maps")
+	fmt.Fprintln(w, "Unknown URL")
 }

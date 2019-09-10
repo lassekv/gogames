@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/lassekv/gogames/gophercises/urlshort/dynamo"
 
-	"github.com/lassekv/gogames/gophercises/dynamo"
 	"gopkg.in/yaml.v2"
 )
 

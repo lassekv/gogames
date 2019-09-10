@@ -2,7 +2,7 @@ package dynamo
 
 import "testing"
 
-func TestDynamoCon(t *testing.T) {
+func TestGetRecord(t *testing.T) {
 	svc, ok := CreateClient()
 	if !ok {
 		t.Error("something went wrong!")
@@ -18,5 +18,23 @@ func TestDynamoCon(t *testing.T) {
 	}
 	if res.ShortURL != shortURL {
 		t.Errorf("return '%v', but expected '%v'", res.ShortURL, shortURL)
+	}
+}
+
+func TestPutRecord(t *testing.T) {
+	svc, ok := CreateClient()
+	if !ok {
+		t.Error("something went wrong!")
+	}
+	shortURL := "wired"
+	URL := "https://www.wired.com/"
+	ok = PutRecord(svc, shortURL, URL)
+	if !ok {
+		t.Error("something went wrong inserting the record!")
+	}
+
+	res, ok := GetRecord(svc, shortURL)
+	if res.URL != URL {
+		t.Errorf("return '%v' but expected '%v'", res.URL, URL)
 	}
 }

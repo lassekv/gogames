@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of adventures</title>
+</head>
+<body>
+<table>
+    {{range $name, $adv := .}}
+        <tr>
+            <td>{{$adv.Title}}</td>
+            <td><a href="./{{$name}}/intro">{{$name}}</a></td>
+        </tr>
+    {{end}}
+</table>
+</body>
+</html>

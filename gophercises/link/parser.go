@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/html"
 )
 
+// Link A link encapsulates a link and a description
 type Link struct {
 	Href string
 	Text string
@@ -52,6 +53,7 @@ func extractHref(attributes []html.Attribute) string {
 	return ""
 }
 
+// ParseHTML takes as input a html stream and returns all links encountered in the document.
 func ParseHTML(r io.Reader) ([]Link, error) {
 	doc, err := html.Parse(r)
 	if err != nil {

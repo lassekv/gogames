@@ -43,7 +43,7 @@ func (ka KnownAdventures) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path == "/" {
 		err := writeTemplate("list_all.tmpl", w, ka)
 		if err != nil {
-			w.WriteHeader(500)
+			http.Error(w, "Unable to read list of adventures", http.StatusInternalServerError)
 		}
 		return
 	}

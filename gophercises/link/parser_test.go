@@ -1,9 +1,10 @@
 package link
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReadExercise1(t *testing.T) {

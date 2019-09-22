@@ -1,9 +1,10 @@
 package link
 
 import (
-	"golang.org/x/net/html"
 	"io"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 type Link struct {

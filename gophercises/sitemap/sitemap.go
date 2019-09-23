@@ -24,6 +24,7 @@ func createURL(path string, host string) *url.URL {
 func getRefs(curURL url.URL) []*url.URL {
 	d, err := http.Get(curURL.String())
 	if err != nil {
+		// Figure out how to do correct error handling here.
 		fmt.Printf("Unable to read URL %v. Returns error %v.\n", curURL, err)
 		return nil
 	}
@@ -36,6 +37,7 @@ func getRefs(curURL url.URL) []*url.URL {
 	var urls = make([]*url.URL, 0, len(links))
 	for _, l := range links {
 		tmp := createURL(l.Href, curURL.Host)
+		// TODO: Remember to check if it is already in urls
 		if tmp != nil && tmp.Host == curURL.Host {
 			urls = append(urls, tmp)
 		}
@@ -47,7 +49,7 @@ func getRefs(curURL url.URL) []*url.URL {
 func BuildSitemap(entryURL string, host string) []*url.URL {
 	initialURL := createURL(entryURL, host)
 	urls := getRefs(*initialURL)
-	// Make a queue of stuff to visit
+	// TODO: Make a queue of stuff to visit
 
 	visitedURLs := make(map[*url.URL]int)
 	visitedURLs[initialURL] = 1

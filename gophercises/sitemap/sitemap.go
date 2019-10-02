@@ -22,6 +22,7 @@ func createURL(path string, host string) *url.URL {
 }
 
 func getRefs(curURL url.URL) []*url.URL {
+	fmt.Printf("Retrieving data from %v\n", curURL)
 	d, err := http.Get(curURL.String())
 	if err != nil {
 		// Figure out how to do correct error handling here.
@@ -37,22 +38,52 @@ func getRefs(curURL url.URL) []*url.URL {
 	var urls = make([]*url.URL, 0, len(links))
 	for _, l := range links {
 		tmp := createURL(l.Href, curURL.Host)
-		// TODO: Remember to check if it is already in urls
 		if tmp != nil && tmp.Host == curURL.Host {
 			urls = append(urls, tmp)
 		}
 	}
 	return urls
 }
+func transformToMap(urls []*url.URL) map[url.URL]int {
+	val := make(map[url.URL]int)
+	for _, v := range urls {
+		val[*v] = 1
+	}
+	return val
+}
 
 // BuildSitemap returns all URLs within a site
-func BuildSitemap(entryURL string, host string) []*url.URL {
+func BuildSitemap(entryURL string, host string) []url.URL {
 	initialURL := createURL(entryURL, host)
-	urls := getRefs(*initialURL)
-	// TODO: Make a queue of stuff to visit
-
-	visitedURLs := make(map[*url.URL]int)
-	visitedURLs[initialURL] = 1
-
-	return urls
+	toVisit := transformToMap(getRefs(*initialURL))
+	visitedURLs := make(map[url.URL]int)
+	visitedURLs[*initialURL] = 1
+	for len(toVisit) > 0 {
+		for el := range toVisit {
+			if _, ok := visitedURLs[el]; ok {
+				delete(toVisit, el)
+				continue
+			}
+			visitedURLs[el] = 1
+			newUrls := getRefs(el)
+			for _, v := range newUrls {
+				_, exist1 := visitedURLs[*v]
+				_, exist2 := toVisit[*v]
+				if !(exist1 || exist2) {
+					toVisit[el] = 1
+				}
+			}
+			delete(toVisit, el)
+			if len(toVisit) == 1 {
+				for el := range toVisit {
+					fmt.Println(el)
+				}
+			}
+		}
+	}
+	result := make([]url.URL, 0, len(visitedURLs))
+	for k := range visitedURLs {
+		result = append(result, k)
+	}
+	return result
 }
